@@ -71,7 +71,6 @@ class EmuService(BaseService):
             os.makedirs(d)
 
         file_path = os.path.join(d, '%s.yml' % data['id'])
-        self.log.debug(file_path)
         with open(file_path, 'w') as f:
             f.write(yaml.dump(data))
 
@@ -95,7 +94,6 @@ class EmuService(BaseService):
         if not os.path.exists(d):
             os.makedirs(d)
         file_path = os.path.join(d, '%s.yml' % data['id'])
-        self.log.debug(file_path)
         with open(file_path, 'w') as f:
             f.write(yaml.dump([data]))
 
