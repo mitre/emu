@@ -24,7 +24,9 @@ class EmuService(BaseService):
             repo_url = 'https://github.com/center-for-threat-informed-defense/adversary_emulation_library'
 
         if not os.path.exists(self.repo_dir) or not os.listdir(self.repo_dir):
+            self.log.debug('cloning repo %s' % repo_url)
             check_call(['git', 'clone', '--depth', '1', repo_url, self.repo_dir], stdout=DEVNULL, stderr=STDOUT)
+            self.log.debug('clone complete')
 
     async def populate_data_directory(self, path_yaml=None):
         """
@@ -38,11 +40,13 @@ class EmuService(BaseService):
         at_ingested = 0
         errors = 0
         for filename in glob.iglob(path_yaml):
-            adversary_name = self.get_adversary_from_filename(filename)
             emulation_plan = self.strip_yml(filename)[0]
 
             abilities = []
+            details = dict()
             for entry in emulation_plan:
+                if 'emulation_plan_details' in entry:
+                    details = entry['emulation_plan_details']
                 if await self._is_ability(entry):
                     at_total += 1
                     try:
@@ -52,7 +56,9 @@ class EmuService(BaseService):
                     except:
                         errors += 1
 
-            await self._save_adversary(adversary_name, abilities)
+            await self._save_adversary(name=details.get('adversary_name', filename),
+                                       description=details.get('adversary_description', filename),
+                                       abilities=abilities)
 
         errors_output = f' and ran into {errors} errors' if errors else ''
         self.log.debug(f'Ingested {at_ingested} abilities (out of {at_total}) from emu plugin{errors_output}')
@@ -74,11 +80,11 @@ class EmuService(BaseService):
         with open(file_path, 'w') as f:
             f.write(yaml.dump(data))
 
-    async def _save_adversary(self, name, abilities):
+    async def _save_adversary(self, name, description, abilities):
         adversary = dict(
             id=str(uuid.uuid4()),
             name=name,
-            description='%s Adversary from CTID Adversary Emulation Plans' % name,
+            description='%s (Emu)' % description,
             atomic_ordering=abilities
         )
         await self._write_adversary(adversary)
@@ -137,7 +143,7 @@ class EmuService(BaseService):
                                 e:
                                     {
                                         'command': info['command'].strip(),
-                                        'payloads': [info.get('payload')] if 'payload' in info else [],
+                                        'payloads': info.get('payloads', []),
                                         'cleanup': info['command'].strip()
                                     }
                             }

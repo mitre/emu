@@ -9,3 +9,5 @@
 .idea/*
 conf/secrets.yml
 adversary-emulation-plans/*
+data/abilities
+data/adversaries
