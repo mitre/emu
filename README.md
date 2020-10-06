@@ -1,6 +1,6 @@
 # CALDERA plugin: Emu
 
-A plugin supplying CALDERA with TTPs from CTID Adversary Emulation Plans.
+A plugin supplying CALDERA with TTPs from the Center for Threat Informed Defense Adversary Emulation Plans.
 
 ## Acknowledgements
 
