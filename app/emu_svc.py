@@ -14,6 +14,7 @@ class EmuService(BaseService):
         self.repo_dir = os.path.join(self.emu_dir, 'adversary-emulation-plans')
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
+        self.sources_dir = os.path.join(self.data_dir, 'sources')
 
     async def clone_repo(self, repo_url=None):
         """
@@ -151,3 +152,55 @@ class EmuService(BaseService):
 
         await self._write_ability(ability)
         return ability['id']
+
+    async def populate_sources_directory(self, path_yaml=None):
+        """
+        Populate the 'sources' directory with the Adversary Emulation Library abilities.
+        """
+
+        if not path_yaml:
+            path_yaml = os.path.join(self.repo_dir, '**', '**', '*.yaml')
+
+        for filename in glob.iglob(path_yaml):
+            emulation_plan = self.strip_yml(filename)[0]
+
+            variables = {}
+            details = {}
+            for entry in emulation_plan:
+                if 'emulation_plan_details' in entry:
+                    details = entry['emulation_plan_details']
+                if not await self._is_ability(entry):
+                    continue
+                arguments = entry.get('input_arguments')
+                if not arguments:
+                    continue
+                platforms = entry.get('platforms', {})
+                for platform, executors in platforms.items():
+                    for executor, properties in executors.items():
+                        if 'command' not in properties:
+                            continue
+                        command = properties['command']
+                        for name, values in arguments.items():
+                            value = values.get('default')
+                            if value:
+                                variables[name.strip()] = value.strip()
+
+            await self._save_facts(details.get('adversary_name', filename),
+                                   variables)
+
+    async def _save_facts(self, name, variables):
+        id = str(uuid.uuid4())
+        sources = {
+            'id': id,
+            'name': name,
+            'facts': self._facts(variables),
+        }
+        if not os.path.exists(self.sources_dir):
+            os.makedirs(self.sources_dir)
+        path = os.path.join(self.sources_dir, '%s.yml' % id)
+        with open(path, 'w', encoding='utf-8') as f:
+            yaml.dump(sources, stream=f, sort_keys=False)
+
+    def _facts(self, variables):
+        return [{'trait': name, 'value': value}
+                for name, value in sorted(variables.items())]

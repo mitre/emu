@@ -15,3 +15,4 @@ async def enable(services):
         plugin_svc = EmuService()
         await plugin_svc.clone_repo()
         await plugin_svc.populate_data_directory()
+        await plugin_svc.populate_sources_directory()
