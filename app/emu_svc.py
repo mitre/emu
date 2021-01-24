@@ -2,6 +2,8 @@ import glob
 import os
 import uuid
 import yaml
+from pathlib import Path
+import shutil
 from subprocess import DEVNULL, STDOUT, check_call
 
 from app.utility.base_service import BaseService
@@ -11,7 +13,7 @@ class EmuService(BaseService):
     def __init__(self):
         self.log = self.add_service('emu_svc', self)
         self.emu_dir = os.path.join('plugins', 'emu')
-        self.repo_dir = os.path.join(self.emu_dir, 'adversary-emulation-plans')
+        self.repo_dir = os.path.join(self.emu_dir, 'data/adversary-emulation-plans')
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
 
@@ -44,22 +46,27 @@ class EmuService(BaseService):
 
             abilities = []
             details = dict()
+            adversary_facts = []
             for entry in emulation_plan:
                 if 'emulation_plan_details' in entry:
                     details = entry['emulation_plan_details']
                 if await self._is_ability(entry):
                     at_total += 1
                     try:
-                        ability_id = await self._save_ability(entry)
+                        ability_id, ability_facts = await self._save_ability(entry)
+                        adversary_facts.extend(ability_facts)
                         abilities.append(ability_id)
                         at_ingested += 1
-                    except:
+                    except Exception as e:
+                        self.log.error(e)
                         errors += 1
 
-            await self._save_adversary(name=details.get('adversary_name', filename),
+            await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
+                                       name=details.get('adversary_name', filename),
                                        description=details.get('adversary_description', filename),
                                        abilities=abilities)
 
+            await self._save_source(details.get('adversary_name', filename), adversary_facts)
         errors_output = f' and ran into {errors} errors' if errors else ''
         self.log.debug(f'Ingested {at_ingested} abilities (out of {at_total}) from emu plugin{errors_output}')
 
@@ -80,9 +87,9 @@ class EmuService(BaseService):
         with open(file_path, 'w') as f:
             f.write(yaml.dump(data))
 
-    async def _save_adversary(self, name, description, abilities):
+    async def _save_adversary(self, id, name, description, abilities):
         adversary = dict(
-            id=str(uuid.uuid4()),
+            id=id,
             name=name,
             description='%s (Emu)' % description,
             atomic_ordering=abilities
@@ -119,7 +126,7 @@ class EmuService(BaseService):
         """
 
         ability = dict(
-            id=str(uuid.uuid4()),
+            id=ab.pop('id', str(uuid.uuid4())),
             name=ab.pop('name', ''),
             description=ab.pop('description', ''),
             tactic=ab.pop('tactic', None),
@@ -134,8 +141,11 @@ class EmuService(BaseService):
         if privilege:
             ability['privilege'] = privilege
 
+        payloads = []
+        facts = []
         for platforms, executors in ab.pop('platforms', dict()).items():
             for name, info in executors.items():
+                payloads.extend(info.get('payloads', []))
                 for e in name.split(','):
                     for pl in platforms.split(','):
                         ability.get('platforms', dict()).update({
@@ -144,10 +154,49 @@ class EmuService(BaseService):
                                     {
                                         'command': info['command'].strip(),
                                         'payloads': info.get('payloads', []),
-                                        'cleanup': info['command'].strip()
+                                        'cleanup': info.get('cleanup','').strip()
                                     }
                             }
                         })
 
+        for fact, details in ab.get('input_arguments', dict()).items():
+            if details.get('default'):
+                facts.append(dict(trait=fact, value=details.get('default')))
+
+        await self._store_payloads(payloads)
         await self._write_ability(ability)
-        return ability['id']
+        return ability['id'], facts
+
+    async def _store_payloads(self, payloads):
+        for payload in payloads:
+            for path in Path(self.repo_dir).rglob(payload):
+                try:
+                    shutil.copyfile(path, os.path.join(self.payloads_dir, path.name))
+                except:
+                    print('could not move')
+
+    async def _save_source(self, name, facts):
+        source = dict(
+            id=str(uuid.uuid4()),
+            name='%s (Emu)' % name,
+            facts=await self._unique_facts(facts)
+        )
+        await self._write_source(source)
+
+    @staticmethod
+    async def _unique_facts(facts):
+        unique_facts = []
+        for fact in facts:
+            if fact not in unique_facts:
+                unique_facts.append(fact)
+        return unique_facts
+
+    async def _write_source(self, data):
+        d = os.path.join(self.data_dir, 'sources')
+
+        if not os.path.exists(d):
+            os.makedirs(d)
+
+        file_path = os.path.join(d, '%s.yml' % data['id'])
+        with open(file_path, 'w') as f:
+            f.write(yaml.dump(data))
