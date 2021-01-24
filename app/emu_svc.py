@@ -58,7 +58,7 @@ class EmuService(BaseService):
                         abilities.append(ability_id)
                         at_ingested += 1
                     except Exception as e:
-                        print(e)
+                        self.log.error(e)
                         errors += 1
 
             await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
