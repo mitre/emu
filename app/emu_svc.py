@@ -177,7 +177,7 @@ class EmuService(BaseService):
 
     async def _save_source(self, name, facts):
         source = dict(
-            id=str(uuid.uuid4()),
+            id=str(uuid.uuid5(uuid.NAMESPACE_OID, name)),
             name='%s (Emu)' % name,
             facts=await self._unique_facts(facts)
         )
