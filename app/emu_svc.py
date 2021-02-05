@@ -36,12 +36,12 @@ class EmuService(BaseService):
         """
 
         if not path_yaml:
-            path_yaml = os.path.join(self.repo_dir, '**', '**', '*.yaml')
+            path_yaml = os.path.join(self.repo_dir, '*', '**', '*.yaml')
 
         at_total = 0
         at_ingested = 0
         errors = 0
-        for filename in glob.iglob(path_yaml):
+        for filename in glob.iglob(path_yaml, recursive=True):
             emulation_plan = self.strip_yml(filename)[0]
 
             abilities = []
