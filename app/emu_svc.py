@@ -149,7 +149,7 @@ class EmuService(BaseService):
                            attack_id=ab.pop('technique', dict()).get('attack_id')),
             repeatable=ab.pop('repeatable', False),
             requirements=ab.pop('requirements', []),
-            platforms=dict()
+            platforms=ab.pop('platforms')
         )
 
         privilege = self.get_privilege(ab.get('executors'))
@@ -158,21 +158,6 @@ class EmuService(BaseService):
 
         payloads = []
         facts = []
-        for platforms, executors in ab.pop('platforms', dict()).items():
-            for name, info in executors.items():
-                payloads.extend(info.get('payloads', []))
-                for e in name.split(','):
-                    for pl in platforms.split(','):
-                        ability.get('platforms', dict()).update({
-                            pl: {
-                                e:
-                                    {
-                                        'command': info['command'].strip(),
-                                        'payloads': info.get('payloads', []),
-                                        'cleanup': info.get('cleanup','').strip()
-                                    }
-                            }
-                        })
 
         for fact, details in ab.get('input_arguments', dict()).items():
             if details.get('default'):
