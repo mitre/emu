@@ -34,48 +34,63 @@ class EmuService(BaseService):
         """
         Populate the 'data' directory with the Adversary Emulation Library abilities.
         """
-
+        total, ingested, errors = 0, 0, 0
         if not path_yaml:
             path_yaml = os.path.join(self.repo_dir, '*', '**', '*.yaml')
 
-        at_total = 0
-        at_ingested = 0
-        errors = 0
         for filename in glob.iglob(path_yaml, recursive=True):
-            emulation_plan = self.strip_yml(filename)[0]
+            plan_total, plan_ingested, plan_errors = await self._ingest_emulation_plan(filename)
+            total += plan_total
+            ingested += plan_ingested
+            errors += plan_errors
 
-            abilities = []
-            details = dict()
-            adversary_facts = []
-            for entry in emulation_plan:
-                if 'emulation_plan_details' in entry:
-                    details = entry['emulation_plan_details']
-                if await self._is_ability(entry):
-                    at_total += 1
-                    try:
-                        ability_id, ability_facts = await self._save_ability(entry)
-                        adversary_facts.extend(ability_facts)
-                        abilities.append(ability_id)
-                        at_ingested += 1
-                    except Exception as e:
-                        self.log.error(e)
-                        errors += 1
-
-            await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
-                                       name=details.get('adversary_name', filename),
-                                       description=details.get('adversary_description', filename),
-                                       abilities=abilities)
-
-            await self._save_source(details.get('adversary_name', filename), adversary_facts)
         errors_output = f' and ran into {errors} errors' if errors else ''
-        self.log.debug(f'Ingested {at_ingested} abilities (out of {at_total}) from emu plugin{errors_output}')
-
-    """ PRIVATE """
+        self.log.debug(f'Ingested {ingested} abilities (out of {total}) from emu plugin{errors_output}')
 
     @staticmethod
     def get_adversary_from_filename(filename):
         base = os.path.basename(filename)
         return os.path.splitext(base)[0]
+
+    """ PRIVATE """
+
+    async def _ingest_emulation_plan(self, filename):
+        at_total, at_ingested, errors = 0, 0, 0
+        emulation_plan = self.strip_yml(filename)[0]
+
+        abilities = []
+        details = dict()
+        adversary_facts = []
+        for entry in emulation_plan:
+            if 'emulation_plan_details' in entry:
+                details = entry['emulation_plan_details']
+                if not self._is_valid_format_version(entry['emulation_plan_details']):
+                    return 0, 0, 1
+            if await self._is_ability(entry):
+                at_total += 1
+                try:
+                    ability_id, ability_facts = await self._save_ability(entry)
+                    adversary_facts.extend(ability_facts)
+                    abilities.append(ability_id)
+                    at_ingested += 1
+                except Exception as e:
+                    self.log.error(e)
+                    errors += 1
+
+        await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
+                                   name=details.get('adversary_name', filename),
+                                   description=details.get('adversary_description', filename),
+                                   abilities=abilities)
+
+        await self._save_source(details.get('adversary_name', filename), adversary_facts)
+        return at_total, at_ingested, errors
+
+    @staticmethod
+    def _is_valid_format_version(details):
+        try:
+            return float(details['format_version']) >= 1.0
+        except:
+            return False
 
     async def _write_adversary(self, data):
         d = os.path.join(self.data_dir, 'adversaries')
