@@ -8,6 +8,10 @@ assignees: wbooth
 ---
 
 **Describe the bug**
+If the bug is related to the adversary emulation plan itself please report them here: 
+
+(https://github.com/center-for-threat-informed-defense/adversary_emulation_library/issues)
+
 A clear and concise description of what the bug is.
 
 **To Reproduce**
