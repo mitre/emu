@@ -69,7 +69,7 @@ class EmuService(BaseService):
             if await self._is_ability(entry):
                 at_total += 1
                 try:
-                    ability_id, ability_facts = await self._save_ability(entry)
+                    ability_id, ability_facts = await self._save_ability(entry, details.get('adversary_name', filename))
                     adversary_facts.extend(ability_facts)
                     abilities.append(ability_id)
                     at_ingested += 1
@@ -135,7 +135,7 @@ class EmuService(BaseService):
         except:
             return False
 
-    async def _save_ability(self, ab):
+    async def _save_ability(self, ab, adversary_name):
         """
         Return True iif an ability was saved.
         """
@@ -160,6 +160,15 @@ class EmuService(BaseService):
         facts = []
 
         for fact, details in ab.get('input_arguments', dict()).items():
+            if fact.count('.') < 2:
+                oldvar = f'#{{{fact}}}'
+                fact = f'emu.{adversary_name}.{fact}'
+                newvar = f'#{{{fact}}}'
+                for p in ability['platforms'].values():
+                    for ex in p.values():
+                        ex['command'] = ex['command'].replace(oldvar, newvar)
+                        if 'cleanup' in ex:
+                            ex['cleanup'] = ex['cleanup'].replace(oldvar, newvar)
             if details.get('default'):
                 facts.append(dict(trait=fact, value=details.get('default')))
 
