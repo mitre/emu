@@ -159,6 +159,11 @@ class EmuService(BaseService):
         payloads = []
         facts = []
 
+        for platform in ability.get('platforms', dict()).values():
+            for executor_details in platform.values():
+                if executor_details.get('payloads'):
+                    payloads.extend(executor_details['payloads'])
+
         for fact, details in ab.get('input_arguments', dict()).items():
             if details.get('default'):
                 facts.append(dict(trait=fact, value=details.get('default')))
