@@ -77,6 +77,9 @@ class EmuService(BaseService):
                     self.log.error(e)
                     errors += 1
 
+        if not details.get('adversary_name'):
+            return 0, 0, 1
+
         await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
                                    name=details.get('adversary_name', filename),
                                    description=details.get('adversary_description', filename),
