@@ -66,6 +66,11 @@ class EmuService(BaseService):
                 details = entry['emulation_plan_details']
                 if not self._is_valid_format_version(entry['emulation_plan_details']):
                     return 0, 0, 1
+
+        if 'adversary_name' not in details:
+            return 0, 0, 1
+
+        for entry in emulation_plan:
             if await self._is_ability(entry):
                 at_total += 1
                 try:
@@ -76,9 +81,6 @@ class EmuService(BaseService):
                 except Exception as e:
                     self.log.error(e)
                     errors += 1
-
-        if 'adversary_name' not in details:
-            return 0, 0, 1
 
         await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
                                    name=details.get('adversary_name', filename),
