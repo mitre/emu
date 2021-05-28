@@ -66,6 +66,11 @@ class EmuService(BaseService):
                 details = entry['emulation_plan_details']
                 if not self._is_valid_format_version(entry['emulation_plan_details']):
                     return 0, 0, 1
+
+        if 'adversary_name' not in details:
+            return 0, 0, 1
+
+        for entry in emulation_plan:
             if await self._is_ability(entry):
                 at_total += 1
                 try:
