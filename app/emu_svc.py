@@ -47,6 +47,14 @@ class EmuService(BaseService):
         errors_output = f' and ran into {errors} errors' if errors else ''
         self.log.debug(f'Ingested {ingested} abilities (out of {total}) from emu plugin{errors_output}')
 
+    async def decrypt_payloads(self):
+        path_crypt_script = os.path.join(self.repo_dir, '*', 'Resources', 'utilities', 'crypt_executables.py')
+        for crypt_script in glob.iglob(path_crypt_script):
+            plan_path = crypt_script[:crypt_script.rindex('Resources') + len('Resources')]
+            self.log.debug('attempting to decrypt plan payloads using %s with the password "malware"' % crypt_script)
+            check_call(['python3', crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=DEVNULL,
+                       stderr=STDOUT)
+
     @staticmethod
     def get_adversary_from_filename(filename):
         base = os.path.basename(filename)
@@ -149,7 +157,7 @@ class EmuService(BaseService):
             id=ab.pop('id', str(uuid.uuid4())),
             name=ab.pop('name', ''),
             description=ab.pop('description', ''),
-            tactic=ab.pop('tactic', None),
+            tactic='-'.join(ab.pop('tactic', None).lower().split(' ')),
             technique=dict(name=ab.get('technique', dict()).get('name'),
                            attack_id=ab.pop('technique', dict()).get('attack_id')),
             repeatable=ab.pop('repeatable', False),
@@ -172,6 +180,11 @@ class EmuService(BaseService):
         for fact, details in ab.get('input_arguments', dict()).items():
             if details.get('default'):
                 facts.append(dict(trait=fact, value=details.get('default')))
+
+        for os, executors in ability.get('platforms').items():
+            for executor, cmd_payload in executors.items():
+                if 'payloads' in cmd_payload.keys():
+                    payloads.extend(cmd_payload.get('payloads'))
 
         await self._store_payloads(payloads)
         await self._write_ability(ability)
