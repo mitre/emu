@@ -193,11 +193,6 @@ class EmuService(BaseService):
             if details.get('default'):
                 facts.append(dict(trait=fact, value=details.get('default')))
 
-        for os, executors in ability.get('platforms').items():
-            for executor, cmd_payload in executors.items():
-                if 'payloads' in cmd_payload.keys():
-                    payloads.extend(cmd_payload.get('payloads'))
-
         await self._store_payloads(payloads)
         await self._write_ability(ability)
         return ability['id'], facts
