@@ -4,7 +4,7 @@ import uuid
 import yaml
 from pathlib import Path
 import shutil
-from subprocess import DEVNULL, STDOUT, check_call
+from subprocess import DEVNULL, PIPE, STDOUT, check_call, Popen, CalledProcessError
 
 from app.utility.base_service import BaseService
 
@@ -52,8 +52,20 @@ class EmuService(BaseService):
         for crypt_script in glob.iglob(path_crypt_script):
             plan_path = crypt_script[:crypt_script.rindex('Resources') + len('Resources')]
             self.log.debug('attempting to decrypt plan payloads using %s with the password "malware"' % crypt_script)
-            check_call(['python3', crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=DEVNULL,
-                       stderr=STDOUT)
+            process = Popen(['python3', crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=PIPE)
+            with process.stdout:
+                for line in iter(process.stdout.readline, b''):
+                    if b'[-]' in line:
+                        self.log.error(line.decode('UTF-8').rstrip())
+                    else:
+                        self.log.debug(line.decode('UTF-8').rstrip())
+            exit_code = process.wait()
+            if exit_code != 0:
+                raise CalledProcessError(
+                    returncode=exit_code,
+                    cmd=process.args,
+                    stderr=process.stderr
+                )
 
     @staticmethod
     def get_adversary_from_filename(filename):

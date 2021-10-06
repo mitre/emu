@@ -7,11 +7,13 @@
 
 curl -o payloads/AdFind.zip http://www.joeware.net/downloads/files/AdFind.zip
 unzip payloads/AdFind.zip -d payloads/
+cp payloads/AdFind.exe payloads/adfind.exe
 
 curl -o payloads/dnscat2.ps1 https://raw.githubusercontent.com/lukebaggett/dnscat2-powershell/master/dnscat2.ps1
 
 curl -o payloads/NetSess.zip http://www.joeware.net/downloads/files/NetSess.zip
 unzip payloads/NetSess.zip -d payloads/
+cp payloads/NetSess.exe payloads/netsess.exe
 
 curl -o payloads/nbtscan.exe http://unixwiz.net/tools/nbtscan-1.0.35.exe
 
