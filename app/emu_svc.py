@@ -52,7 +52,7 @@ class EmuService(BaseService):
         for crypt_script in glob.iglob(path_crypt_script):
             plan_path = crypt_script[:crypt_script.rindex('Resources') + len('Resources')]
             self.log.debug('attempting to decrypt plan payloads using %s with the password "malware"' % crypt_script)
-            process = Popen(['python3', crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=PIPE)
+            process = Popen([sys.executable, crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=PIPE)
             with process.stdout:
                 for line in iter(process.stdout.readline, b''):
                     if b'[-]' in line:
@@ -169,7 +169,7 @@ class EmuService(BaseService):
             id=ab.pop('id', str(uuid.uuid4())),
             name=ab.pop('name', ''),
             description=ab.pop('description', ''),
-            tactic='-'.join(ab.pop('tactic', None).lower().split(' ')),
+            tactic='-'.join(ab.pop('tactic', '').lower().split(' ')),
             technique=dict(name=ab.get('technique', dict()).get('name'),
                            attack_id=ab.pop('technique', dict()).get('attack_id')),
             repeatable=ab.pop('repeatable', False),
