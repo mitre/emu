@@ -5,6 +5,7 @@ import yaml
 from pathlib import Path
 import shutil
 from subprocess import DEVNULL, PIPE, STDOUT, check_call, Popen, CalledProcessError
+import sys
 
 from app.utility.base_service import BaseService
 
