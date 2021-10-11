@@ -8,6 +8,8 @@
 *__pycache__*
 .idea/*
 conf/secrets.yml
-adversary-emulation-plans/*
+data/adversary-emulation-plans
 data/abilities
 data/adversaries
+data/sources
+payloads

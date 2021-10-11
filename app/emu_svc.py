@@ -3,8 +3,10 @@ import os
 import uuid
 import yaml
 from pathlib import Path
+import pkg_resources
 import shutil
-from subprocess import DEVNULL, STDOUT, check_call
+from subprocess import DEVNULL, PIPE, STDOUT, check_call, Popen, CalledProcessError
+import sys
 
 from app.utility.base_service import BaseService
 
@@ -16,6 +18,9 @@ class EmuService(BaseService):
         self.repo_dir = os.path.join(self.emu_dir, 'data/adversary-emulation-plans')
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
+
+        self.log.debug('Checking for pyminizip dependency for decrypting adversary_emulation_library binaries...')
+        self.log.debug('pyminizip installed version is %s' % pkg_resources.get_distribution('pyminizip').version)
 
     async def clone_repo(self, repo_url=None):
         """
@@ -46,6 +51,26 @@ class EmuService(BaseService):
 
         errors_output = f' and ran into {errors} errors' if errors else ''
         self.log.debug(f'Ingested {ingested} abilities (out of {total}) from emu plugin{errors_output}')
+
+    async def decrypt_payloads(self):
+        path_crypt_script = os.path.join(self.repo_dir, '*', 'Resources', 'utilities', 'crypt_executables.py')
+        for crypt_script in glob.iglob(path_crypt_script):
+            plan_path = crypt_script[:crypt_script.rindex('Resources') + len('Resources')]
+            self.log.debug('attempting to decrypt plan payloads using %s with the password "malware"' % crypt_script)
+            process = Popen([sys.executable, crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=PIPE)
+            with process.stdout:
+                for line in iter(process.stdout.readline, b''):
+                    if b'[-]' in line:
+                        self.log.error(line.decode('UTF-8').rstrip())
+                    else:
+                        self.log.debug(line.decode('UTF-8').rstrip())
+            exit_code = process.wait()
+            if exit_code != 0:
+                raise CalledProcessError(
+                    returncode=exit_code,
+                    cmd=process.args,
+                    stderr=process.stderr
+                )
 
     @staticmethod
     def get_adversary_from_filename(filename):
@@ -149,7 +174,7 @@ class EmuService(BaseService):
             id=ab.pop('id', str(uuid.uuid4())),
             name=ab.pop('name', ''),
             description=ab.pop('description', ''),
-            tactic=ab.pop('tactic', None),
+            tactic='-'.join(ab.pop('tactic', '').lower().split(' ')),
             technique=dict(name=ab.get('technique', dict()).get('name'),
                            attack_id=ab.pop('technique', dict()).get('attack_id')),
             repeatable=ab.pop('repeatable', False),
