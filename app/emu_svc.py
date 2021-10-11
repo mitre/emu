@@ -3,6 +3,7 @@ import os
 import uuid
 import yaml
 from pathlib import Path
+import pkg_resources
 import shutil
 from subprocess import DEVNULL, PIPE, STDOUT, check_call, Popen, CalledProcessError
 import sys
@@ -17,6 +18,9 @@ class EmuService(BaseService):
         self.repo_dir = os.path.join(self.emu_dir, 'data/adversary-emulation-plans')
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
+
+        self.log.debug('Checking for pyminizip dependency for decrypting adversary_emulation_library binaries...')
+        self.log.debug('pyminizip installed version is %s' % pkg_resources.get_distribution('pyminizip').version)
 
     async def clone_repo(self, repo_url=None):
         """
