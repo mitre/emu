@@ -19,6 +19,4 @@ class EmuGUI(BaseWorld):
 
     @template('emu.html')
     async def splash(self, request):
-        abilities = [a for a in await self.data_svc.locate('abilities') if await a.which_plugin() == 'emu']
-        adversaries = [a for a in await self.data_svc.locate('adversaries') if await a.which_plugin() == 'emu']
-        return dict(name=self.name, description=self.description, abilities=abilities, adversaries=adversaries)
+        return dict()
