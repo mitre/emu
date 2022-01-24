@@ -1,3 +1,6 @@
+from app.utility.base_world import BaseWorld
+
+
 class LogicalPlanner:
     def __init__(self, operation, planning_svc, stopping_conditions=(), filtered_groups_by_ability=None):
         self.operation = operation
@@ -9,6 +12,7 @@ class LogicalPlanner:
         self.filtered_groups_by_ability = filtered_groups_by_ability if filtered_groups_by_ability else dict()
         self.pending_links = []
         self.current_ability_index = 0
+        self.log = BaseWorld.create_logger('group_filtered_planner')
 
     async def execute(self):
         await self.planning_svc.execute_planner(self)
@@ -17,8 +21,11 @@ class LogicalPlanner:
         links_to_use = await self._fetch_links()
         if links_to_use:
             # Each agent will run the next available step.
-            await self.operation.wait_for_links_completion(links_to_use)
+            self.log.debug('Applying %d links', len(links_to_use))
+            links_to_wait_for = [await self.operation.apply(link) for link in links_to_use]
+            await self.operation.wait_for_links_completion(links_to_wait_for)
         else:
+            self.log.debug('No more links to run.')
             self.next_bucket = None
 
     async def _fetch_links(self):

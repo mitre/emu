@@ -1,7 +1,7 @@
 import pytest
 
 from app.objects.secondclass.c_link import Link
-from plugins.emu.app.group_filtered_planner import GroupFilteredPlanner
+from plugins.emu.app.group_filtered_planner import LogicalPlanner
 
 
 BUCKET_NAME = 'fetch_and_run_links'
@@ -14,6 +14,9 @@ class DummyOperation:
 
     async def wait_for_links_completion(self, _):
         return
+
+    async def apply(self, link):
+        return link
 
 
 class DummyAdversary:
@@ -108,7 +111,7 @@ def generate_planner(potential_links_dict):
 
     def _generate_planner(atomic_ordering, agents, filtered_groups_by_ability=None):
         operation = DummyOperation(DummyAdversary(atomic_ordering), agents)
-        planner = GroupFilteredPlanner(operation, None, filtered_groups_by_ability=filtered_groups_by_ability)
+        planner = LogicalPlanner(operation, None, filtered_groups_by_ability=filtered_groups_by_ability)
         planner._get_links = _get_links_mock
         return planner
     return _generate_planner
