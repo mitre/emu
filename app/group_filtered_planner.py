@@ -1,4 +1,4 @@
-class GroupFilteredPlanner:
+class LogicalPlanner:
     def __init__(self, operation, planning_svc, stopping_conditions=(), filtered_groups_by_ability=None):
         self.operation = operation
         self.planning_svc = planning_svc
