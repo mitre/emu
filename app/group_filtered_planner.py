@@ -65,3 +65,6 @@ class LogicalPlanner:
             if agent.group in self.filtered_groups_by_ability.get(ability_id, []):
                 valid_agents.append(agent)
         return valid_agents
+
+    async def _get_links(self, agent=None):
+        return await self.planning_svc.get_links(operation=self.operation, agent=agent)
