@@ -60,6 +60,7 @@ def potential_links_dict():
             Link('test command', 'paw1', DummyAbility('123'), None),
             Link('test command variant', 'paw1', DummyAbility('123'), None),
             Link('test command', 'paw1', DummyAbility('456'), None),
+            Link('test command', 'paw1', DummyAbility('1011'), None),
         ],
         'paw2': [
             Link('test command', 'paw2', DummyAbility('123'), None),
@@ -82,6 +83,7 @@ def potential_links_list():
         Link('test command', 'paw2', DummyAbility('123'), None),
         Link('test command', 'paw3', DummyAbility('1011'), None),
         Link('test command', 'paw4', DummyAbility('456'), None),
+        Link('test command', 'paw1', DummyAbility('1011'), None),
     ]
 
 
@@ -202,10 +204,13 @@ class TestGroupFilteredPlanner:
         links_to_use = await planner_without_filter._fetch_links()
         assert len(planner_without_filter.pending_links) == 0
         assert planner_without_filter.current_ability_index == 4
-        assert len(links_to_use) == 1
-        assert links_to_use[0].paw == 'paw3'
+        assert len(links_to_use) == 2
+        assert links_to_use[0].paw == 'paw1'
         assert links_to_use[0].command == 'test command'
         assert links_to_use[0].ability.ability_id == '1011'
+        assert links_to_use[1].paw == 'paw3'
+        assert links_to_use[1].command == 'test command'
+        assert links_to_use[1].ability.ability_id == '1011'
 
         # fifth pass - end
         links_to_use = await planner_without_filter._fetch_links()
@@ -245,10 +250,14 @@ class TestGroupFilteredPlanner:
         assert links[1].command == 'test command'
 
         links = await filtered_planner._get_pending_links('1011')
-        assert len(links) == 1
-        assert links[0].paw == 'paw3'
+        assert len(links) == 2
+        assert links[0].paw == 'paw1'
         assert links[0].ability.ability_id == '1011'
         assert links[0].command == 'test command'
+        assert links[1].paw == 'paw3'
+        assert links[1].ability.ability_id == '1011'
+        assert links[1].command == 'test command'
+
 
     async def test_fetch_links_with_filter(self, filtered_planner):
         assert not filtered_planner.pending_links
@@ -291,10 +300,13 @@ class TestGroupFilteredPlanner:
         links_to_use = await filtered_planner._fetch_links()
         assert len(filtered_planner.pending_links) == 0
         assert filtered_planner.current_ability_index == 4
-        assert len(links_to_use) == 1
-        assert links_to_use[0].paw == 'paw3'
+        assert len(links_to_use) == 2
+        assert links_to_use[0].paw == 'paw1'
         assert links_to_use[0].command == 'test command'
         assert links_to_use[0].ability.ability_id == '1011'
+        assert links_to_use[1].paw == 'paw3'
+        assert links_to_use[1].command == 'test command'
+        assert links_to_use[1].ability.ability_id == '1011'
 
         # fifth pass - end
         links_to_use = await filtered_planner._fetch_links()
