@@ -258,7 +258,6 @@ class TestGroupFilteredPlanner:
         assert links[1].ability.ability_id == '1011'
         assert links[1].command == 'test command'
 
-
     async def test_fetch_links_with_filter(self, filtered_planner):
         assert not filtered_planner.pending_links
         assert filtered_planner.current_ability_index == 0
