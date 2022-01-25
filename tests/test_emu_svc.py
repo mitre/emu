@@ -2,7 +2,6 @@ import glob
 import yaml
 import shutil
 
-import asyncio
 import pytest
 
 from unittest.mock import patch
