@@ -35,22 +35,14 @@ class EmuService(BaseService):
             check_call(['git', 'clone', '--depth', '1', repo_url, self.repo_dir], stdout=DEVNULL, stderr=STDOUT)
             self.log.debug('clone complete')
 
-    async def populate_data_directory(self, path_yaml=None):
+    async def populate_data_directory(self, library_path=None):
         """
         Populate the 'data' directory with the Adversary Emulation Library abilities.
         """
-        total, ingested, errors = 0, 0, 0
-        if not path_yaml:
-            path_yaml = os.path.join(self.repo_dir, '*', '**', '*.yaml')
-
-        for filename in glob.iglob(path_yaml, recursive=True):
-            plan_total, plan_ingested, plan_errors = await self._ingest_emulation_plan(filename)
-            total += plan_total
-            ingested += plan_ingested
-            errors += plan_errors
-
-        errors_output = f' and ran into {errors} errors' if errors else ''
-        self.log.debug(f'Ingested {ingested} abilities (out of {total}) from emu plugin{errors_output}')
+        if not library_path:
+            library_path = os.path.join(self.repo_dir, '*')
+        await self._load_adversaries_and_abilities(library_path)
+        await self._load_planners(library_path)
 
     async def decrypt_payloads(self):
         path_crypt_script = os.path.join(self.repo_dir, '*', 'Resources', 'utilities', 'crypt_executables.py')
@@ -79,7 +71,61 @@ class EmuService(BaseService):
 
     """ PRIVATE """
 
+    async def _load_adversaries_and_abilities(self, library_path):
+        adv_emu_plan_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', '*.yaml')
+        await self._load_object(adv_emu_plan_path, 'abilities', self._ingest_emulation_plan)
+
+    async def _load_planners(self, library_path):
+        planner_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', 'planners', '*.yml')
+        await self._load_object(planner_path, 'planners', self._ingest_planner)
+
+    async def _load_object(self, search_path, object_name, ingestion_func):
+        total, ingested, errors = 0, 0, 0
+        for filename in glob.iglob(search_path):
+            total_obj, ingested_obj, num_errors = await ingestion_func(filename)
+            total += total_obj
+            ingested += ingested_obj
+            errors += num_errors
+        errors_output = f' and ran into {errors} errors' if errors else ''
+        self.log.debug(f'Ingested {ingested} {object_name} (out of {total}) from emu plugin{errors_output}')
+
+    async def _ingest_planner(self, filename):
+        num_planners, num_ingested, num_errors = 0, 0, 0
+        self.log.debug('Ingesting planner at %s', filename)
+        try:
+            planner_contents = self.strip_yml(filename)[0]
+            if self._is_planner(planner_contents):
+                num_planners += 1
+                planner_id = planner_contents['id']
+                target_filename = '%s.yml' % planner_id
+                try:
+                    self._copy_planner(filename, target_filename)
+                    num_ingested += 1
+                except IOError as e:
+                    self.log.error('Error copying planner file to %s', target_filename, e)
+                    num_errors += 1
+            else:
+                self.log.error('Yaml file %s located in planner directory but does not contain a planner.', filename)
+                num_errors += 1
+        except Exception as e:
+            self.log.error('Error parsing yaml file %s: %s', filename, e)
+            num_errors += 1
+        return num_planners, num_ingested, num_errors
+
+    def _copy_planner(self, source_path, target_filename):
+        planner_dir = os.path.join(self.data_dir, 'planners')
+        if not os.path.exists(planner_dir):
+            os.makedirs(planner_dir)
+        target_path = os.path.join(planner_dir, target_filename)
+        shutil.copyfile(source_path, target_path)
+        self.log.debug('Copied planner to %s', target_path)
+
+    @staticmethod
+    def _is_planner(data):
+        return {'id', 'module'}.issubset(set(data.keys()))
+
     async def _ingest_emulation_plan(self, filename):
+        self.log.debug('Ingesting emulation plan at %s', filename)
         at_total, at_ingested, errors = 0, 0, 0
         emulation_plan = self.strip_yml(filename)[0]
 
@@ -90,9 +136,11 @@ class EmuService(BaseService):
             if 'emulation_plan_details' in entry:
                 details = entry['emulation_plan_details']
                 if not self._is_valid_format_version(entry['emulation_plan_details']):
+                    self.log.error('Yaml file %s does not contain emulation plan details', filename)
                     return 0, 0, 1
 
         if 'adversary_name' not in details:
+            self.log.error('Yaml file %s does not contain adversary info', filename)
             return 0, 0, 1
 
         for entry in emulation_plan:
