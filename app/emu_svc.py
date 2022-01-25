@@ -119,7 +119,7 @@ class EmuService(BaseService):
     def _is_valid_format_version(details):
         try:
             return float(details['format_version']) >= 1.0
-        except:
+        except Exception:
             return False
 
     async def _write_adversary(self, data):
@@ -162,7 +162,7 @@ class EmuService(BaseService):
                 if 'elevation_required' in ex:
                     return 'Elevated'
                 return False
-        except:
+        except Exception:
             return False
 
     async def _save_ability(self, ab):
@@ -207,8 +207,8 @@ class EmuService(BaseService):
             for path in Path(self.repo_dir).rglob(payload):
                 try:
                     shutil.copyfile(path, os.path.join(self.payloads_dir, path.name))
-                except:
-                    print('could not move')
+                except Exception as e:
+                    self.log.error(e)
 
     async def _save_source(self, name, facts):
         source = dict(
