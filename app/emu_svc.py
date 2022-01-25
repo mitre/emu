@@ -256,7 +256,7 @@ class EmuService(BaseService):
                 try:
                     shutil.copyfile(path, os.path.join(self.payloads_dir, path.name))
                 except Exception as e:
-                    self.log.error(e)
+                    self.log.error('Failed to copy payload %s to %s: %s', payload, path, e)
 
     async def _save_source(self, name, facts):
         source = dict(
