@@ -60,10 +60,8 @@ class TestEmuSvc:
     async def test_ingest_planner(self, emu_svc, planner_yaml):
 
         with patch.object(BaseWorld, 'strip_yml', return_value=planner_yaml) as new_strip_yml:
-            with patch.object(shutil, 'copyfile', return_value=None) as new_copyfile:
-                await emu_svc._ingest_planner(TestEmuSvc.PLANNER_PATH)
+            await emu_svc._ingest_planner(TestEmuSvc.PLANNER_PATH)
         new_strip_yml.assert_called_once_with(TestEmuSvc.PLANNER_PATH)
-        new_copyfile.assert_called_once_with(TestEmuSvc.PLANNER_PATH, TestEmuSvc.DEST_PLANNER_PATH)
 
     async def test_ingest_bad_planner(self, emu_svc, not_planner_yaml):
         with patch.object(BaseWorld, 'strip_yml', return_value=not_planner_yaml) as new_strip_yml:
@@ -74,18 +72,14 @@ class TestEmuSvc:
 
     async def test_load_planners(self, emu_svc, planner_yaml):
         with patch.object(BaseWorld, 'strip_yml', return_value=planner_yaml) as new_strip_yml:
-            with patch.object(shutil, 'copyfile', return_value=None) as new_copyfile:
-                with patch.object(glob, 'iglob', return_value=[TestEmuSvc.PLANNER_PATH]) as new_iglob:
-                    await emu_svc._load_planners(TestEmuSvc.LIBRARY_GLOB_PATH)
+            with patch.object(glob, 'iglob', return_value=[TestEmuSvc.PLANNER_PATH]) as new_iglob:
+                await emu_svc._load_planners(TestEmuSvc.LIBRARY_GLOB_PATH)
         new_iglob.assert_called_once_with(TestEmuSvc.PLANNER_GLOB_PATH)
         new_strip_yml.assert_called_once_with(TestEmuSvc.PLANNER_PATH)
-        new_copyfile.assert_called_once_with(TestEmuSvc.PLANNER_PATH, TestEmuSvc.DEST_PLANNER_PATH)
 
     async def test_load_bad_planners(self, emu_svc, not_planner_yaml):
         with patch.object(BaseWorld, 'strip_yml', return_value=not_planner_yaml) as new_strip_yml:
-            with patch.object(shutil, 'copyfile', return_value=None) as new_copyfile:
-                with patch.object(glob, 'iglob', return_value=[TestEmuSvc.PLANNER_PATH]) as new_iglob:
-                    await emu_svc._load_planners(TestEmuSvc.LIBRARY_GLOB_PATH)
+            with patch.object(glob, 'iglob', return_value=[TestEmuSvc.PLANNER_PATH]) as new_iglob:
+                await emu_svc._load_planners(TestEmuSvc.LIBRARY_GLOB_PATH)
         new_iglob.assert_called_once_with(TestEmuSvc.PLANNER_GLOB_PATH)
         new_strip_yml.assert_called_once_with(TestEmuSvc.PLANNER_PATH)
-        new_copyfile.assert_not_called()
