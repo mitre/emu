@@ -12,4 +12,5 @@ data/adversary-emulation-plans
 data/abilities
 data/adversaries
 data/sources
+data/planners
 payloads
