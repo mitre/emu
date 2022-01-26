@@ -251,8 +251,6 @@ class EmuService(BaseService):
         return ability['id'], facts
 
     def _register_required_payloads(self, payloads):
-        for payload in payloads:
-            self.log.debug('Registering required payload %s', payload)
         self.required_payloads.update(payloads)
 
     async def _store_required_payloads(self):
@@ -262,7 +260,6 @@ class EmuService(BaseService):
             found = False
             self.log.debug('Searching for required payload %s.', payload)
             for path in Path(self.repo_dir).rglob(payload):
-                self.log.debug('Found payload %s at %s.', payload, path)
                 found = True
                 try:
                     target_path = os.path.join(self.payloads_dir, path.name)
