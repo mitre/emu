@@ -77,7 +77,7 @@ class EmuService(BaseService):
     async def _load_adversaries_and_abilities(self, library_path):
         adv_emu_plan_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', '*.yaml')
         await self._load_object(adv_emu_plan_path, 'abilities', self._ingest_emulation_plan)
-        await self._store_required_payloads()
+        self._store_required_payloads()
 
     async def _load_planners(self, library_path):
         planner_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', 'planners', '*.yml')
@@ -260,15 +260,15 @@ class EmuService(BaseService):
     def _register_required_payloads(self, payloads):
         self.required_payloads.update(payloads)
 
-    async def _store_required_payloads(self):
+    def _store_required_payloads(self):
         self.log.debug('Searching for and storing required payloads.')
         for payload in self.required_payloads:
             copied = False
             found = False
             for path in Path(self.repo_dir).rglob(payload):
                 found = True
+                target_path = os.path.join(self.payloads_dir, path.name)
                 try:
-                    target_path = os.path.join(self.payloads_dir, path.name)
                     shutil.copyfile(path, target_path)
                     copied = True
                     break
