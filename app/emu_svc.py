@@ -18,6 +18,7 @@ class EmuService(BaseService):
         self.repo_dir = os.path.join(self.emu_dir, 'data/adversary-emulation-plans')
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
+        self.required_payloads = set()
 
         self.log.debug('Checking for pyminizip dependency for decrypting adversary_emulation_library binaries...')
         self.log.debug('pyminizip installed version is %s' % pkg_resources.get_distribution('pyminizip').version)
@@ -48,7 +49,8 @@ class EmuService(BaseService):
         path_crypt_script = os.path.join(self.repo_dir, '*', 'Resources', 'utilities', 'crypt_executables.py')
         for crypt_script in glob.iglob(path_crypt_script):
             plan_path = crypt_script[:crypt_script.rindex('Resources') + len('Resources')]
-            self.log.debug('attempting to decrypt plan payloads using %s with the password "malware"' % crypt_script)
+            self.log.debug('attempting to decrypt plan payloads from %s using %s with the password "malware"',
+                           plan_path, crypt_script)
             process = Popen([sys.executable, crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=PIPE)
             with process.stdout:
                 for line in iter(process.stdout.readline, b''):
@@ -58,6 +60,7 @@ class EmuService(BaseService):
                         self.log.debug(line.decode('UTF-8').rstrip())
             exit_code = process.wait()
             if exit_code != 0:
+                self.log.error(process.stderr)
                 raise CalledProcessError(
                     returncode=exit_code,
                     cmd=process.args,
@@ -74,6 +77,7 @@ class EmuService(BaseService):
     async def _load_adversaries_and_abilities(self, library_path):
         adv_emu_plan_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', '*.yaml')
         await self._load_object(adv_emu_plan_path, 'abilities', self._ingest_emulation_plan)
+        await self._store_required_payloads()
 
     async def _load_planners(self, library_path):
         planner_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', 'planners', '*.yml')
@@ -233,30 +237,45 @@ class EmuService(BaseService):
         privilege = self.get_privilege(ab.get('executors'))
         if privilege:
             ability['privilege'] = privilege
-
-        payloads = []
         facts = []
 
         for platform in ability.get('platforms', dict()).values():
             for executor_details in platform.values():
-                if executor_details.get('payloads'):
-                    payloads.extend(executor_details['payloads'])
+                self._register_required_payloads(executor_details.get('payloads', []))
 
         for fact, details in ab.get('input_arguments', dict()).items():
             if details.get('default'):
                 facts.append(dict(trait=fact, value=details.get('default')))
 
-        await self._store_payloads(payloads)
         await self._write_ability(ability)
         return ability['id'], facts
 
-    async def _store_payloads(self, payloads):
+    def _register_required_payloads(self, payloads):
         for payload in payloads:
+            self.log.debug('Registering required payload %s', payload)
+        self.required_payloads.update(payloads)
+
+    async def _store_required_payloads(self):
+        self.log.debug('Searching for and storing required payloads.')
+        for payload in self.required_payloads:
+            copied = False
+            found = False
+            self.log.debug('Searching for required payload %s.', payload)
             for path in Path(self.repo_dir).rglob(payload):
+                self.log.debug('Found payload %s at %s.', payload, path)
+                found = True
                 try:
-                    shutil.copyfile(path, os.path.join(self.payloads_dir, path.name))
+                    target_path = os.path.join(self.payloads_dir, path.name)
+                    shutil.copyfile(path, target_path)
+                    self.log.debug('Copied payload from %s to %s.', path, target_path)
+                    copied = True
+                    break
                 except Exception as e:
-                    self.log.error(e)
+                    self.log.error('Failed to copy payload %s to %s: %s.', payload, path, e)
+            if not found:
+                self.log.warn('Could not find payload %s within %s.', payload, self.repo_dir)
+            elif not copied:
+                self.log.warn('Found payload %s, but could not copy it to the payloads directory.', payload)
 
     async def _save_source(self, name, facts):
         source = dict(
