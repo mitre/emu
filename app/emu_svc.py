@@ -258,17 +258,15 @@ class EmuService(BaseService):
         for payload in self.required_payloads:
             copied = False
             found = False
-            self.log.debug('Searching for required payload %s.', payload)
             for path in Path(self.repo_dir).rglob(payload):
                 found = True
                 try:
                     target_path = os.path.join(self.payloads_dir, path.name)
                     shutil.copyfile(path, target_path)
-                    self.log.debug('Copied payload from %s to %s.', path, target_path)
                     copied = True
                     break
                 except Exception as e:
-                    self.log.error('Failed to copy payload %s to %s: %s.', payload, path, e)
+                    self.log.error('Failed to copy payload %s to %s: %s.', payload, target_path, e)
             if not found:
                 self.log.warn('Could not find payload %s within %s.', payload, self.repo_dir)
             elif not copied:
