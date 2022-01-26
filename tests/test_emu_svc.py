@@ -181,7 +181,7 @@ class TestEmuSvc:
         new_copyfile.assert_not_called()
 
     async def test_ingest_abilities(self, emu_svc, sample_emu_plan):
-        with patch.object(EmuService, '_write_ability', return_value=asyncio.Future().set_result(None)) as write_ability:
+        with patch.object(EmuService, '_write_ability', return_value=asyncio.Future()) as write_ability:
             abilities, facts, at_total, at_ingested, errors = await emu_svc._ingest_abilities(sample_emu_plan)
         assert write_ability.call_count == 3
         assert abilities == ['1-2-3', '2-3-4', '3-4-5']
