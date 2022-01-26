@@ -130,12 +130,8 @@ class EmuService(BaseService):
 
     async def _ingest_emulation_plan(self, filename):
         self.log.debug('Ingesting emulation plan at %s', filename)
-        at_total, at_ingested, errors = 0, 0, 0
         emulation_plan = self.strip_yml(filename)[0]
-
-        abilities = []
         details = dict()
-        adversary_facts = []
         for entry in emulation_plan:
             if 'emulation_plan_details' in entry:
                 details = entry['emulation_plan_details']
@@ -147,6 +143,24 @@ class EmuService(BaseService):
             self.log.error('Yaml file %s does not contain adversary info', filename)
             return 0, 0, 1
 
+        abilities, adversary_facts, at_total, at_ingested, errors = await self._ingest_abilities(emulation_plan)
+        await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
+                                   name=details.get('adversary_name', filename),
+                                   description=details.get('adversary_description', filename),
+                                   abilities=abilities)
+        await self._save_source(details.get('adversary_name', filename), adversary_facts)
+        return at_total, at_ingested, errors
+
+    async def _ingest_abilities(self, emulation_plan):
+        """Ingests the abilities in the emulation plan and returns a tuple representing the following:
+            - list of ingested ability IDs to add to the adversary profile
+            - list of facts required for the adversary profile
+            - total number of abilities from the emulation plan
+            - total number of abilities that were successfully ingested
+            - number of errors"""
+        at_total, at_ingested, errors = 0, 0, 0
+        abilities = []
+        adversary_facts = []
         for entry in emulation_plan:
             if await self._is_ability(entry):
                 at_total += 1
@@ -158,14 +172,7 @@ class EmuService(BaseService):
                 except Exception as e:
                     self.log.error(e)
                     errors += 1
-
-        await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
-                                   name=details.get('adversary_name', filename),
-                                   description=details.get('adversary_description', filename),
-                                   abilities=abilities)
-
-        await self._save_source(details.get('adversary_name', filename), adversary_facts)
-        return at_total, at_ingested, errors
+        return abilities, adversary_facts, at_total, at_ingested, errors
 
     @staticmethod
     def _is_valid_format_version(details):
