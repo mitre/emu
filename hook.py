@@ -26,5 +26,5 @@ async def enable(services):
         if os.path.isdir(full_path):
             shutil.rmtree(full_path)
 
-    await plugin_svc.populate_data_directory()
     await plugin_svc.decrypt_payloads()
+    await plugin_svc.populate_data_directory()
