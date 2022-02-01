@@ -236,3 +236,10 @@ class TestEmuSvc:
             call(PosixPath('/path/to/payload2'), 'plugins/emu/payloads/payload2'),
             call(PosixPath('/path/to/payload3'), 'plugins/emu/payloads/payload3'),
         ], any_order=True)
+
+    def test_register_required_payloads(self, emu_svc):
+        payloads = ['payload1', 'payload2', 'payload3', 'sandcat.go-darwin', 'sandcat.go-linux',
+                                     'sandcat.go-windows']
+        want = {'payload1', 'payload2', 'payload3'}
+        emu_svc._register_required_payloads(payloads)
+        assert emu_svc.required_payloads == want

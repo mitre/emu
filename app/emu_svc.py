@@ -12,6 +12,8 @@ from app.utility.base_service import BaseService
 
 
 class EmuService(BaseService):
+    _dynamicically_compiled_payloads = {'sandcat.go-linux', 'sandcat.go-darwin', 'sandcat.go-windows'}
+
     def __init__(self):
         self.log = self.add_service('emu_svc', self)
         self.emu_dir = os.path.join('plugins', 'emu')
@@ -258,7 +260,9 @@ class EmuService(BaseService):
         return ability['id'], facts
 
     def _register_required_payloads(self, payloads):
-        self.required_payloads.update(payloads)
+        self.required_payloads.update(
+            [payload for payload in payloads if payload not in self._dynamicically_compiled_payloads]
+        )
 
     def _store_required_payloads(self):
         self.log.debug('Searching for and storing required payloads.')
