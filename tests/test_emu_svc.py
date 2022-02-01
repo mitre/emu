@@ -238,8 +238,7 @@ class TestEmuSvc:
         ], any_order=True)
 
     def test_register_required_payloads(self, emu_svc):
-        payloads = ['payload1', 'payload2', 'payload3', 'sandcat.go-darwin', 'sandcat.go-linux',
-                                     'sandcat.go-windows']
+        payloads = ['payload1', 'payload2', 'payload3', 'sandcat.go-darwin', 'sandcat.go-linux', 'sandcat.go-windows']
         want = {'payload1', 'payload2', 'payload3'}
         emu_svc._register_required_payloads(payloads)
         assert emu_svc.required_payloads == want
