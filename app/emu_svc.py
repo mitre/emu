@@ -12,12 +12,15 @@ from app.utility.base_service import BaseService
 
 
 class EmuService(BaseService):
+    _dynamicically_compiled_payloads = {'sandcat.go-linux', 'sandcat.go-darwin', 'sandcat.go-windows'}
+
     def __init__(self):
         self.log = self.add_service('emu_svc', self)
         self.emu_dir = os.path.join('plugins', 'emu')
         self.repo_dir = os.path.join(self.emu_dir, 'data/adversary-emulation-plans')
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
+        self.required_payloads = set()
 
         self.log.debug('Checking for pyminizip dependency for decrypting adversary_emulation_library binaries...')
         self.log.debug('pyminizip installed version is %s' % pkg_resources.get_distribution('pyminizip').version)
@@ -48,7 +51,8 @@ class EmuService(BaseService):
         path_crypt_script = os.path.join(self.repo_dir, '*', 'Resources', 'utilities', 'crypt_executables.py')
         for crypt_script in glob.iglob(path_crypt_script):
             plan_path = crypt_script[:crypt_script.rindex('Resources') + len('Resources')]
-            self.log.debug('attempting to decrypt plan payloads using %s with the password "malware"' % crypt_script)
+            self.log.debug('attempting to decrypt plan payloads from %s using %s with the password "malware"',
+                           plan_path, crypt_script)
             process = Popen([sys.executable, crypt_script, '-i', plan_path, '-p', 'malware', '--decrypt'], stdout=PIPE)
             with process.stdout:
                 for line in iter(process.stdout.readline, b''):
@@ -58,6 +62,7 @@ class EmuService(BaseService):
                         self.log.debug(line.decode('UTF-8').rstrip())
             exit_code = process.wait()
             if exit_code != 0:
+                self.log.error(process.stderr)
                 raise CalledProcessError(
                     returncode=exit_code,
                     cmd=process.args,
@@ -74,6 +79,7 @@ class EmuService(BaseService):
     async def _load_adversaries_and_abilities(self, library_path):
         adv_emu_plan_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', '*.yaml')
         await self._load_object(adv_emu_plan_path, 'abilities', self._ingest_emulation_plan)
+        self._store_required_payloads()
 
     async def _load_planners(self, library_path):
         planner_path = os.path.join(library_path, 'Emulation_Plan', 'yaml', 'planners', '*.yml')
@@ -126,12 +132,8 @@ class EmuService(BaseService):
 
     async def _ingest_emulation_plan(self, filename):
         self.log.debug('Ingesting emulation plan at %s', filename)
-        at_total, at_ingested, errors = 0, 0, 0
         emulation_plan = self.strip_yml(filename)[0]
-
-        abilities = []
         details = dict()
-        adversary_facts = []
         for entry in emulation_plan:
             if 'emulation_plan_details' in entry:
                 details = entry['emulation_plan_details']
@@ -143,6 +145,24 @@ class EmuService(BaseService):
             self.log.error('Yaml file %s does not contain adversary info', filename)
             return 0, 0, 1
 
+        abilities, adversary_facts, at_total, at_ingested, errors = await self._ingest_abilities(emulation_plan)
+        await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
+                                   name=details.get('adversary_name', filename),
+                                   description=details.get('adversary_description', filename),
+                                   abilities=abilities)
+        await self._save_source(details.get('adversary_name', filename), adversary_facts)
+        return at_total, at_ingested, errors
+
+    async def _ingest_abilities(self, emulation_plan):
+        """Ingests the abilities in the emulation plan and returns a tuple representing the following:
+            - list of ingested ability IDs to add to the adversary profile
+            - list of facts required for the adversary profile
+            - total number of abilities from the emulation plan
+            - total number of abilities that were successfully ingested
+            - number of errors"""
+        at_total, at_ingested, errors = 0, 0, 0
+        abilities = []
+        adversary_facts = []
         for entry in emulation_plan:
             if await self._is_ability(entry):
                 at_total += 1
@@ -154,14 +174,7 @@ class EmuService(BaseService):
                 except Exception as e:
                     self.log.error(e)
                     errors += 1
-
-        await self._save_adversary(id=details.get('id', str(uuid.uuid4())),
-                                   name=details.get('adversary_name', filename),
-                                   description=details.get('adversary_description', filename),
-                                   abilities=abilities)
-
-        await self._save_source(details.get('adversary_name', filename), adversary_facts)
-        return at_total, at_ingested, errors
+        return abilities, adversary_facts, at_total, at_ingested, errors
 
     @staticmethod
     def _is_valid_format_version(details):
@@ -233,30 +246,42 @@ class EmuService(BaseService):
         privilege = self.get_privilege(ab.get('executors'))
         if privilege:
             ability['privilege'] = privilege
-
-        payloads = []
         facts = []
 
         for platform in ability.get('platforms', dict()).values():
             for executor_details in platform.values():
-                if executor_details.get('payloads'):
-                    payloads.extend(executor_details['payloads'])
+                self._register_required_payloads(executor_details.get('payloads', []))
 
         for fact, details in ab.get('input_arguments', dict()).items():
             if details.get('default'):
                 facts.append(dict(trait=fact, value=details.get('default')))
 
-        await self._store_payloads(payloads)
         await self._write_ability(ability)
         return ability['id'], facts
 
-    async def _store_payloads(self, payloads):
-        for payload in payloads:
+    def _register_required_payloads(self, payloads):
+        self.required_payloads.update(
+            [payload for payload in payloads if payload not in self._dynamicically_compiled_payloads]
+        )
+
+    def _store_required_payloads(self):
+        self.log.debug('Searching for and storing required payloads.')
+        for payload in self.required_payloads:
+            copied = False
+            found = False
             for path in Path(self.repo_dir).rglob(payload):
+                found = True
+                target_path = os.path.join(self.payloads_dir, path.name)
                 try:
-                    shutil.copyfile(path, os.path.join(self.payloads_dir, path.name))
+                    shutil.copyfile(path, target_path)
+                    copied = True
+                    break
                 except Exception as e:
-                    self.log.error(e)
+                    self.log.error('Failed to copy payload %s to %s: %s.', payload, target_path, e)
+            if not found:
+                self.log.warn('Could not find payload %s within %s.', payload, self.repo_dir)
+            elif not copied:
+                self.log.warn('Found payload %s, but could not copy it to the payloads directory.', payload)
 
     async def _save_source(self, name, facts):
         source = dict(
