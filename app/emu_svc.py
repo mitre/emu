@@ -22,9 +22,6 @@ class EmuService(BaseService):
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
         self.required_payloads = set()
 
-        self.log.debug('Checking for pyminizip dependency for decrypting adversary_emulation_library binaries...')
-        self.log.debug('pyminizip installed version is %s' % pkg_resources.get_distribution('pyminizip').version)
-
     async def clone_repo(self, repo_url=None):
         """
         Clone the Adversary Emulation Library repository. You can use a specific url via
