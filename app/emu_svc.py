@@ -3,7 +3,6 @@ import os
 import uuid
 import yaml
 from pathlib import Path
-import pkg_resources
 import shutil
 from subprocess import DEVNULL, PIPE, STDOUT, check_call, Popen, CalledProcessError
 import sys
