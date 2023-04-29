@@ -11,7 +11,7 @@ from app.utility.base_service import BaseService
 
 
 class EmuService(BaseService):
-    _dynamicically_compiled_payloads = {'sandcat.go-linux', 'sandcat.go-darwin', 'sandcat.go-windows'}
+    _dynamicically_compiled_payloads = {'sandcat.go-linux', 'sandcat.go-darwin', 'sandcat.go-windows', 'sandcat.go-freebsd'}
 
     def __init__(self):
         self.log = self.add_service('emu_svc', self)
