@@ -13,6 +13,7 @@ data_dir = os.path.join('plugins', name.lower(), 'data')
 
 
 async def enable(services):
+    BaseWorld.apply_config('emu', BaseWorld.strip_yml('plugins/emu/conf/default.yml')[0])
     plugin_svc = EmuService()
     emu_gui = EmuGUI(services, name, description)
     app = services.get('app_svc').application
