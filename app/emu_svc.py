@@ -20,7 +20,7 @@ class EmuService(BaseService):
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
         self.required_payloads = set()
-        self.evals_c2_address = self.get_config(name='emu', prop='evals_c2_address')
+        self.evals_c2_host = self.get_config(name='emu', prop='evals_c2_host')
         self.evals_c2_port = self.get_config(name='emu', prop='evals_c2_port')
 
     async def clone_repo(self, repo_url=None):
