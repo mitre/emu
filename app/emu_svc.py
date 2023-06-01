@@ -21,7 +21,7 @@ class EmuService(BaseService):
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
         self.required_payloads = set()
-        BaseWorld.apply_config('emu', BaseWorld.strip_yml(_emu_config_path))
+        BaseWorld.apply_config('emu', BaseWorld.strip_yml(self._emu_config_path)[0])
         self.evals_c2_host = self.get_config(name='emu', prop='evals_c2_host')
         self.evals_c2_port = self.get_config(name='emu', prop='evals_c2_port')
 
