@@ -10,6 +10,7 @@ import sys
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 
+
 class EmuService(BaseService):
     _dynamicically_compiled_payloads = {'sandcat.go-linux', 'sandcat.go-darwin', 'sandcat.go-windows'}
     _emu_config_path = "conf/default.yml"
