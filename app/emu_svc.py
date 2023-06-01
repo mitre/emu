@@ -8,10 +8,11 @@ from subprocess import DEVNULL, PIPE, STDOUT, check_call, Popen, CalledProcessEr
 import sys
 
 from app.utility.base_service import BaseService
-
+from app.utility.base_world import BaseWorld
 
 class EmuService(BaseService):
     _dynamicically_compiled_payloads = {'sandcat.go-linux', 'sandcat.go-darwin', 'sandcat.go-windows'}
+    _emu_config_path = "conf/default.yml"
 
     def __init__(self):
         self.log = self.add_service('emu_svc', self)
@@ -20,6 +21,7 @@ class EmuService(BaseService):
         self.data_dir = os.path.join(self.emu_dir, 'data')
         self.payloads_dir = os.path.join(self.emu_dir, 'payloads')
         self.required_payloads = set()
+        BaseWorld.apply_config('emu', BaseWorld.strip_yml(_emu_config_path))
         self.evals_c2_host = self.get_config(name='emu', prop='evals_c2_host')
         self.evals_c2_port = self.get_config(name='emu', prop='evals_c2_port')
 
