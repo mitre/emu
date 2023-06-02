@@ -21,7 +21,7 @@ the decryption which requires installation of some dependencies. Depending on th
 can be installed using the following:
 
 - Ubuntu: `apt-get install zlib1g`
-- MacOS: `homebrew install zlib`
+- MacOS: `brew install zlib`
 - All OS's: `pip3 install -r requirements.txt`
 
 See URL for more information regarding `pyminizip`: https://github.com/smihica/pyminizip
