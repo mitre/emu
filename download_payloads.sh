@@ -32,3 +32,8 @@ unzip payloads/wce_v1_41beta_universal.zip -d payloads/
 curl -o payloads/wmiexec.vbs https://raw.githubusercontent.com/Twi1ight/AD-Pentest-Script/master/wmiexec.vbs
 
 curl -o payloads/psexec_sandworm.py https://raw.githubusercontent.com/SecureAuthCorp/impacket/c328de825265df12ced44d14b36c688cd9973f5c/examples/psexec.py
+
+if [ -f "data/adversary-emulation-plans/oilrig/Resources/Binaries/binaries.zip" ]
+then
+  unzip -P malware data/adversary-emulation-plans/oilrig/Resources/Binaries/binaries.zip
+fi
