@@ -28,6 +28,7 @@ class EmuService(BaseService):
         self.evals_c2_host = self.get_config(name='emu', prop='evals_c2_host')
         self.evals_c2_port = self.get_config(name='emu', prop='evals_c2_port')
         self.app_svc = self.get_service('app_svc')
+        self.contact_svc = self.get_service('contact_svc')
         if not self.app_svc:
             self.log.error('App svc not found.')
         else:
