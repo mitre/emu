@@ -1,7 +1,7 @@
 # We are not able to bundle some payloads because their licensing
 # prohibits redistribution (notably sysinternals).  This script will
 # will download non-redistributable payloads.  If you're deploying
-# the plugin without interent access, you can copy this script to
+# the plugin without internet access, you can copy this script to
 # an internet connected host, run it, and then copy the resulting
 # payloads back to the emu/payloads directory
 

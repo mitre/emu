@@ -270,6 +270,8 @@ class EmuService(BaseService):
         for payload in self.required_payloads:
             copied = False
             found = False
+            if os.path.exists(os.path.join(self.payloads_dir, payload)):
+                continue
             for path in Path(self.repo_dir).rglob(payload):
                 found = True
                 target_path = os.path.join(self.payloads_dir, path.name)
