@@ -32,3 +32,25 @@ unzip payloads/wce_v1_41beta_universal.zip -d payloads/
 curl -o payloads/wmiexec.vbs https://raw.githubusercontent.com/Twi1ight/AD-Pentest-Script/master/wmiexec.vbs
 
 curl -o payloads/psexec_sandworm.py https://raw.githubusercontent.com/SecureAuthCorp/impacket/c328de825265df12ced44d14b36c688cd9973f5c/examples/psexec.py
+
+curl -o payloads/PSTools.zip https://web.archive.org/web/20221102141531/http://download.sysinternals.com/files/PSTools.zip
+unzip payloads/PSTools.zip -d payloads/PSTools
+psexec_md5=$(md5sum payloads/PSTools/PsExec64.exe | awk '{ print $1 }')
+if [ "$psexec_md5" = "84858ca42dc54947eea910e8fab5f668" ]
+then
+    target_dir="data/adversary-emulation-plans/turla/Resources/payloads/snake"
+    mkdir -p "$target_dir" && cp payloads/PSTools/PsExec64.exe $target_dir/PsExec.exe
+    echo "PsExec64.exe v2.4 copied to Turla payloads directory"
+else
+    echo "PsExec from PSTools.zip with MD5 '$psexec_md5' does not match v2.4 with MD5 of 84858ca42dc54947eea910e8fab5f668"
+fi
+
+curl -o payloads/pscp.exe https://the.earth.li/~sgtatham/putty/latest/w64/pscp.exe
+target_dir="data/adversary-emulation-plans/turla/Resources/payloads/carbon"
+mkdir -p "$target_dir" && cp payloads/pscp.exe $target_dir/pscp.exe
+echo "Pscp.exe copied to Turla payloads directory"
+
+curl -o payloads/plink.exe https://the.earth.li/~sgtatham/putty/latest/w64/plink.exe
+target_dir="data/adversary-emulation-plans/turla/Resources/payloads/carbon"
+mkdir -p "$target_dir" && cp payloads/plink.exe $target_dir/plink.exe
+echo "Plink.exe copied to Turla payloads directory"
