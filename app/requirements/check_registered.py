@@ -11,13 +11,9 @@ class Requirement(BaseRequirement):
         :param operation
         :return: True if it complies, False if it doesn't
         """
-        print("\n\n*********************\nin check_registered.py")
         agent_paws = [agent.paw for agent in await operation.active_agents()]
         for uf in link.used:
-            print("id: ", uf.value ,"   agent_paws:", agent_paws)
             if uf.value in agent_paws:
-                print("returning true - run this ability")
                 return True
-        print("returning false - don't run this ability")
         return False
     
