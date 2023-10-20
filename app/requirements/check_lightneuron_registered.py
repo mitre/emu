@@ -6,7 +6,7 @@ class Requirement(BaseRequirement):
 
     async def enforce(self, link, operation):
         """
-        Given a link and the current operation, ensure the ability will only run if the 
+        Given a link and the current operation, ensure the ability will only run if the
         agent with the given ID/PAW is listed in the Agents tab on the Caldera Server GUI.
         :param link
         :param operation
@@ -16,6 +16,6 @@ class Requirement(BaseRequirement):
         for uf in link.used:
             # Remove the "@" character if it appears in the given fact
             # In order to accomodate the Lightneuron implant ID
-            if uf.value.replace("@","") in agent_paws:
+            if uf.value.replace("@", "") in agent_paws:
                 return True
         return False
