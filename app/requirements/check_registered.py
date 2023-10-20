@@ -6,7 +6,6 @@ class Requirement(BaseRequirement):
     async def enforce(self, link, operation):
         """
         Given a link and the current operation, ensure will only run if the agent with the given ID/PAW is alive.
-        
         :param link
         :param operation
         :return: True if it complies, False if it doesn't
@@ -16,4 +15,3 @@ class Requirement(BaseRequirement):
             if uf.value in agent_paws:
                 return True
         return False
-    
