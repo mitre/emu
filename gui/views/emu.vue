@@ -24,8 +24,8 @@ const emuAdversaries = computed(() =>
 
 <template lang="pug">
 .content    
-    h2 Atomic
-    p The collection of abilities in the Red Canary Atomic test project.
+    h2 Emu
+    p The collection of abilities from the CTID Adversary Emulation Plans
 hr
 
 .is-flex.is-align-items-center.is-justify-content-center
