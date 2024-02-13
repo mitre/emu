@@ -1,4 +1,4 @@
-# Caldera plugin: Emu
+# MITRE Caldera Plugin: Emu
 
 A plugin supplying Caldera with TTPs from the Center for Threat Informed Defense (CTID) Adversary Emulation Plans.
 
