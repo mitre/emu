@@ -6,7 +6,7 @@
 # payloads back to the emu/payloads directory
 
 curl -o payloads/AdFind.zip http://www.joeware.net/downloads/files/AdFind.zip
-unzip payloads/AdFind.zip -d payloads/ -P NotMalware
+unzip -P NotMalware payloads/AdFind.zip -d payloads/ 
 cp payloads/AdFind.exe payloads/adfind.exe
 
 curl -o payloads/dnscat2.ps1 https://raw.githubusercontent.com/lukebaggett/dnscat2-powershell/master/dnscat2.ps1
