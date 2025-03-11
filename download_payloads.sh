@@ -54,3 +54,6 @@ curl -o payloads/plink.exe https://the.earth.li/~sgtatham/putty/latest/w64/plink
 target_dir="data/adversary-emulation-plans/turla/Resources/payloads/carbon"
 mkdir -p "$target_dir" && cp payloads/plink.exe $target_dir/plink.exe
 echo "Plink.exe copied to Turla payloads directory"
+
+curl -o payloads/m64.exe https://github.com/ParrotSec/mimikatz/blob/master/x64/mimikatz.exe
+echo "x64 mimikatz.exe copied to payloads directory as m64.exe"
