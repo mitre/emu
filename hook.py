@@ -22,10 +22,5 @@ async def enable(services):
     if not os.path.isdir(plugin_svc.repo_dir):
         await plugin_svc.clone_repo()
 
-    for directory in ['abilities', 'adversaries', 'sources', 'planners']:
-        full_path = os.path.join(data_dir, directory)
-        if os.path.isdir(full_path):
-            shutil.rmtree(full_path)
-
     await plugin_svc.decrypt_payloads()
     await plugin_svc.populate_data_directory()
