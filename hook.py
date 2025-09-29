@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from app.utility.base_world import BaseWorld
 from plugins.emu.app.emu_svc import EmuService
