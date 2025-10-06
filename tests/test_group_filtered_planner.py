@@ -49,10 +49,10 @@ def dummy_agents():
 @pytest.fixture
 def pending_links():
     return [
-        Link('test command', 'paw1', DummyAbility('123'), None),
-        Link('test command variant', 'paw1', DummyAbility('123'), None),
-        Link('test command', 'paw2', DummyAbility('123'), None),
-        Link('test command', 'paw3', DummyAbility('123'), None),
+        Link(command='test command', paw='paw1', ability=DummyAbility('123')),
+        Link(command='test command variant', paw='paw1', ability=DummyAbility('123')),
+        Link(command='test command', paw='paw2', ability=DummyAbility('123')),
+        Link(command='test command', paw='paw3', ability=DummyAbility('123')),
     ]
 
 
@@ -60,19 +60,19 @@ def pending_links():
 def potential_links_dict():
     return {
         'paw1': [
-            Link('test command', 'paw1', DummyAbility('123'), None),
-            Link('test command variant', 'paw1', DummyAbility('123'), None),
-            Link('test command', 'paw1', DummyAbility('456'), None),
-            Link('test command', 'paw1', DummyAbility('1011'), None),
+            Link(command='test command', paw='paw1', ability=DummyAbility('123')),
+            Link(command='test command variant', paw='paw1', ability=DummyAbility('123')),
+            Link(command='test command', paw='paw1', ability=DummyAbility('456')),
+            Link(command='test command', paw='paw1', ability=DummyAbility('1011')),
         ],
         'paw2': [
-            Link('test command', 'paw2', DummyAbility('123'), None),
+            Link(command='test command', paw='paw2', ability=DummyAbility('123')),
         ],
         'paw3': [
-            Link('test command', 'paw3', DummyAbility('1011'), None),
+            Link(command='test command', paw='paw3', ability=DummyAbility('1011')),
         ],
         'paw4': [
-           Link('test command', 'paw4', DummyAbility('456'), None),
+           Link(command='test command', paw='paw4', ability=DummyAbility('456')),
         ],
     }
 
@@ -80,13 +80,13 @@ def potential_links_dict():
 @pytest.fixture
 def potential_links_list():
     return [
-        Link('test command', 'paw1', DummyAbility('123'), None),
-        Link('test command variant', 'paw1', DummyAbility('123'), None),
-        Link('test command', 'paw1', DummyAbility('456'), None),
-        Link('test command', 'paw2', DummyAbility('123'), None),
-        Link('test command', 'paw3', DummyAbility('1011'), None),
-        Link('test command', 'paw4', DummyAbility('456'), None),
-        Link('test command', 'paw1', DummyAbility('1011'), None),
+        Link(command='test command', paw='paw1', ability=DummyAbility('123')),
+        Link(command='test command variant', paw='paw1', ability=DummyAbility('123')),
+        Link(command='test command', paw='paw1', ability=DummyAbility('456')),
+        Link(command='test command', paw='paw2', ability=DummyAbility('123')),
+        Link(command='test command', paw='paw3', ability=DummyAbility('1011')),
+        Link(command='test command', paw='paw4', ability=DummyAbility('456')),
+        Link(command='test command', paw='paw1', ability=DummyAbility('1011')),
     ]
 
 
