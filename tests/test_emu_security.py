@@ -2,9 +2,10 @@ import ast
 import os
 
 import pytest
-import yaml
 
-PLUGIN_DIR = os.path.join(os.path.dirname(__file__), '..')
+yaml = pytest.importorskip("yaml")
+
+PLUGIN_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 REQUIREMENTS_PATH = os.path.join(PLUGIN_DIR, 'requirements.txt')
 HOOK_PATH = os.path.join(PLUGIN_DIR, 'hook.py')
 CONF_DIR = os.path.join(PLUGIN_DIR, 'conf')
@@ -21,7 +22,7 @@ class TestRequirementsSecurity:
         in requirements.txt should warn maintainers about this risk so it
         is not overlooked during dependency reviews.
         """
-        with open(REQUIREMENTS_PATH, 'r') as f:
+        with open(REQUIREMENTS_PATH, 'r', encoding='utf-8') as f:
             content = f.read()
 
         # Verify pyminizip is listed
@@ -59,7 +60,7 @@ class TestHookParseable:
 
     def test_hook_can_be_parsed(self):
         """hook.py should be valid Python parseable by ast.parse."""
-        with open(HOOK_PATH, 'r') as f:
+        with open(HOOK_PATH, 'r', encoding='utf-8') as f:
             source = f.read()
         try:
             tree = ast.parse(source)
@@ -69,7 +70,7 @@ class TestHookParseable:
 
     def test_hook_defines_enable_function(self):
         """hook.py must define an async 'enable' function."""
-        with open(HOOK_PATH, 'r') as f:
+        with open(HOOK_PATH, 'r', encoding='utf-8') as f:
             source = f.read()
         tree = ast.parse(source)
         enable_funcs = [
@@ -82,7 +83,7 @@ class TestHookParseable:
 
     def test_hook_defines_plugin_name(self):
         """hook.py should define a 'name' variable."""
-        with open(HOOK_PATH, 'r') as f:
+        with open(HOOK_PATH, 'r', encoding='utf-8') as f:
             source = f.read()
         tree = ast.parse(source)
         name_assignments = [
@@ -119,7 +120,7 @@ class TestAbilitiesYAML:
             f"No YAML files found in {CONF_DIR}"
         )
         for fpath in yaml_files:
-            with open(fpath, 'r') as f:
+            with open(fpath, 'r', encoding='utf-8') as f:
                 try:
                     data = yaml.safe_load(f)
                 except yaml.YAMLError as e:
@@ -136,7 +137,7 @@ class TestAbilitiesYAML:
                 "No YAML files in data/ — run plugin setup to populate"
             )
         for fpath in yaml_files:
-            with open(fpath, 'r') as f:
+            with open(fpath, 'r', encoding='utf-8') as f:
                 try:
                     data = yaml.safe_load(f)
                 except yaml.YAMLError as e:
