@@ -1,1 +1,4 @@
+# WARNING: pyminizip 0.2.6 is affected by CVE-2023-45853 (integer overflow
+# in bundled minizip/zlib code). No patched version is available as of 2026-03.
+# Consider replacing with an alternative zip library when one becomes available.
 pyminizip==0.2.6
