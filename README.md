@@ -1,8 +1,15 @@
 # MITRE Caldera Plugin: Emu
 
-A plugin supplying Caldera with TTPs from the Center for Threat Informed Defense (CTID) Adversary Emulation Plans.
+## Overview:
 
-# Installation
+The Emu plugin supplies Caldera with TTPs from MITRE’s Center for Threat Informed Defense (CTID) Adversary Emulation Plans.
+
+### Context:
+High-fidelity adversary emulation
+
+<!-- ### Known Limitations: -->
+
+## Installation:
 
 Using the Emu plugin with Caldera will enable users to access the adversary profiles contained in the [CTID Adversary Emulation Library](https://github.com/center-for-threat-informed-defense/adversary_emulation_library). 
 
@@ -14,9 +21,10 @@ To run Caldera along with the Emu plugin:
 5. Some adversaries may require additional payloads and executables to be downloaded. Run the `download_payloads.sh` script to download these binaries to the `payloads` directory.
 6. Start Caldera again. You will see the Emu plugin shown on the left sidebar of the Caldera server, and you will be able to access the Adversary Emulation Library adversary profiles from the Adversary tab of the Caldera server.
 
-# Additional setup
+## Dependencies/Requirements:
+
 Each emulation plan will have an adversary and a set of facts. Please ensure to select the related facts to the 
-adversary when starting an operation. 
+adversary when starting an operation.
 
 Because some payloads within the Adversary Emulation Library are encrypted, a Python script is used to automate
 the decryption which requires installation of some dependencies. Depending on the host OS, `pyminizip`
@@ -28,6 +36,6 @@ can be installed using the following:
 
 See URL for more information regarding `pyminizip`: https://github.com/smihica/pyminizip
 
-## Acknowledgements
+## Getting Started:
 
-- [Adversary Emulation Library](https://github.com/center-for-threat-informed-defense/adversary_emulation_library)
+View MITRE CTID's emulation plans here: [Adversary Emulation Library](https://github.com/center-for-threat-informed-defense/adversary_emulation_library)
