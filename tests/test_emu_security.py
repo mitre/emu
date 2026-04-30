@@ -107,7 +107,7 @@ class TestAbilitiesYAML:
         yaml_files = []
         if not os.path.isdir(directory):
             return yaml_files
-        for root, dirs, files in os.walk(directory):
+        for root, _dirs, files in os.walk(directory):
             for fname in files:
                 if fname.endswith('.yml') or fname.endswith('.yaml'):
                     yaml_files.append(os.path.join(root, fname))
@@ -142,3 +142,6 @@ class TestAbilitiesYAML:
                     data = yaml.safe_load(f)
                 except yaml.YAMLError as e:
                     pytest.fail(f"Failed to parse {fpath}: {e}")
+                assert data is not None, (
+                    f"YAML file is empty: {fpath}"
+                )
