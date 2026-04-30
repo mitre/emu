@@ -159,8 +159,11 @@ class EmuService(BaseService):
         if not os.path.exists(planner_dir):
             os.makedirs(planner_dir)
         target_path = os.path.join(planner_dir, target_filename)
-        shutil.copyfile(source_path, target_path)
-        self.log.debug('Copied planner to %s', target_path)
+        if os.path.exists(target_path):
+            self.log.debug('Planner %s already exists. Skipping.', target_path)
+        else:
+            shutil.copyfile(source_path, target_path)
+            self.log.debug('Copied planner to %s', target_path)
 
     @staticmethod
     def _is_planner(data):
@@ -226,8 +229,11 @@ class EmuService(BaseService):
             os.makedirs(d)
 
         file_path = os.path.join(d, '%s.yml' % data['id'])
-        with open(file_path, 'w') as f:
-            f.write(yaml.dump(data))
+        if os.path.exists(file_path):
+            self.log.debug('Adversary profile %s already exists. Skipping.', file_path)
+        else:
+            with open(file_path, 'w') as f:
+                f.write(yaml.dump(data))
 
     async def _save_adversary(self, id, name, description, abilities):
         adversary = dict(
@@ -249,8 +255,11 @@ class EmuService(BaseService):
         if not os.path.exists(d):
             os.makedirs(d)
         file_path = os.path.join(d, '%s.yml' % data['id'])
-        with open(file_path, 'w') as f:
-            f.write(yaml.dump([data]))
+        if os.path.exists(file_path):
+            self.log.debug('Ability file %s already exists. Skipping.', file_path)
+        else:
+            with open(file_path, 'w') as f:
+                f.write(yaml.dump([data]))
 
     @staticmethod
     def get_privilege(executors):
@@ -344,5 +353,8 @@ class EmuService(BaseService):
             os.makedirs(d)
 
         file_path = os.path.join(d, '%s.yml' % data['id'])
-        with open(file_path, 'w') as f:
-            f.write(yaml.dump(data))
+        if os.path.exists(file_path):
+            self.log.debug('Fact source file %s already exists. Skipping.', file_path)
+        else:
+            with open(file_path, 'w') as f:
+                f.write(yaml.dump(data))
