@@ -10,4 +10,5 @@ repos:
         - id: bandit
           entry: bandit -ll --exclude=tests/ --skip=B303
           additional_dependencies:
+            - pbr
             - importlib-metadata<5; python_version < '3.8'
