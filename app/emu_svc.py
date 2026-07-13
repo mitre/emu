@@ -309,6 +309,12 @@ class EmuService(BaseService):
             [payload for payload in payloads if payload not in self._dynamicically_compiled_payloads]
         )
 
+    @staticmethod
+    def _is_resource_path(path):
+        """Check if the given path is under a Resources/ directory (not Archive/)."""
+        path_str = str(path)
+        return 'Resources' + os.sep in path_str or '/Resources/' in path_str
+
     def _store_required_payloads(self):
         self.log.debug('Searching for and storing required payloads.')
         for payload in self.required_payloads:
@@ -316,7 +322,12 @@ class EmuService(BaseService):
             found = False
             if os.path.exists(os.path.join(self.payloads_dir, payload)):
                 continue
-            for path in Path(self.repo_dir).rglob(payload):
+            matches = list(Path(self.repo_dir).rglob(payload))
+            # Prioritize payloads from Resources/ directories over other locations
+            # (e.g. Archive/CALDERA_DIY/evals/payloads) to avoid loading wrong files.
+            resource_matches = [p for p in matches if self._is_resource_path(p)]
+            ordered_matches = resource_matches if resource_matches else matches
+            for path in ordered_matches:
                 found = True
                 target_path = os.path.join(self.payloads_dir, path.name)
                 try:

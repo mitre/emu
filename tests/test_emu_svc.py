@@ -237,6 +237,43 @@ class TestEmuSvc:
             call(PosixPath('/path/to/payload3'), 'plugins/emu/payloads/payload3'),
         ], any_order=True)
 
+    def test_store_required_payloads_prefers_resources_path(self, emu_svc):
+        """Payloads under Resources/ should be preferred over Archive/ duplicates (#32)."""
+        def _rglob(_, target):
+            return [
+                PosixPath('/repo/apt29/Archive/CALDERA_DIY/evals/payloads/' + target),
+                PosixPath('/repo/apt29/Resources/payloads/' + target),
+            ]
+
+        emu_svc.required_payloads = {'evil.exe'}
+        with patch.object(Path, 'rglob', new=_rglob):
+            with patch.object(shutil, 'copyfile', return_value=None) as new_copyfile:
+                emu_svc._store_required_payloads()
+        # Should copy from Resources/ path, not Archive/ path
+        new_copyfile.assert_called_once_with(
+            PosixPath('/repo/apt29/Resources/payloads/evil.exe'),
+            'plugins/emu/payloads/evil.exe',
+        )
+
+    def test_store_required_payloads_falls_back_when_no_resources(self, emu_svc):
+        """If no Resources/ match exists, fall back to any available match."""
+        def _rglob(_, target):
+            return [PosixPath('/repo/other_location/' + target)]
+
+        emu_svc.required_payloads = {'tool.dll'}
+        with patch.object(Path, 'rglob', new=_rglob):
+            with patch.object(shutil, 'copyfile', return_value=None) as new_copyfile:
+                emu_svc._store_required_payloads()
+        new_copyfile.assert_called_once_with(
+            PosixPath('/repo/other_location/tool.dll'),
+            'plugins/emu/payloads/tool.dll',
+        )
+
+    def test_is_resource_path(self):
+        assert EmuService._is_resource_path(PosixPath('/repo/apt29/Resources/payloads/evil.exe')) is True
+        assert EmuService._is_resource_path(PosixPath('/repo/apt29/Archive/CALDERA_DIY/evals/payloads/evil.exe')) is False
+        assert EmuService._is_resource_path(PosixPath('/repo/other/evil.exe')) is False
+
     def test_register_required_payloads(self, emu_svc):
         payloads = ['payload1', 'payload2', 'payload3', 'sandcat.go-darwin', 'sandcat.go-linux', 'sandcat.go-windows']
         want = {'payload1', 'payload2', 'payload3'}
