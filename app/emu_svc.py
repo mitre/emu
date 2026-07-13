@@ -59,7 +59,7 @@ class EmuService(BaseService):
         except Exception as e:
             error_msg = 'Server error when processing forwarded beacon: %s' % e
             self.log.error(error_msg)
-            raise web.HTTPBadRequest(error_msg)
+            raise web.HTTPBadRequest(reason=error_msg)
 
     async def clone_repo(self, repo_url=None):
         """

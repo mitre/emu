@@ -6,7 +6,9 @@ import asyncio
 import pytest
 
 from pathlib import Path, PosixPath
-from unittest.mock import patch, call
+from unittest.mock import patch, call, AsyncMock
+
+from aiohttp import web
 
 from app.utility.base_world import BaseWorld
 from plugins.emu.app.emu_svc import EmuService
@@ -242,3 +244,15 @@ class TestEmuSvc:
         want = {'payload1', 'payload2', 'payload3'}
         emu_svc._register_required_payloads(payloads)
         assert emu_svc.required_payloads == want
+
+    async def test_handle_forwarded_beacon_bad_json_raises_http_bad_request(self, emu_svc):
+        """Regression test: handle_forwarded_beacon must raise HTTPBadRequest with a reason=
+        keyword argument when the request body is not valid JSON."""
+        mock_request = AsyncMock()
+        mock_request.read.return_value = b'not-valid-json'
+
+        with pytest.raises(web.HTTPBadRequest) as exc_info:
+            await emu_svc.handle_forwarded_beacon(mock_request)
+
+        assert exc_info.value.reason is not None
+        assert len(exc_info.value.reason) > 0
