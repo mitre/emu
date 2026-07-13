@@ -1,0 +1,17 @@
+{
+  "name": "emu-e2e-tests",
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for the MITRE Caldera Emu plugin",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test",
+    "test:chromium": "npx playwright test --project=chromium",
+    "test:firefox": "npx playwright test --project=firefox",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "install:browsers": "npx playwright install --with-deps chromium firefox"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
