@@ -1,4 +1,6 @@
+import asyncio
 import glob
+import re
 import json
 import os
 import uuid
@@ -6,7 +8,7 @@ import yaml
 from aiohttp import web
 from pathlib import Path
 import shutil
-from subprocess import DEVNULL, PIPE, STDOUT, check_call, Popen, CalledProcessError
+from subprocess import DEVNULL, PIPE, STDOUT, Popen, CalledProcessError
 import sys
 
 from app.utility.base_service import BaseService
@@ -69,9 +71,17 @@ class EmuService(BaseService):
         if not repo_url:
             repo_url = 'https://github.com/center-for-threat-informed-defense/adversary_emulation_library'
 
+        if not re.match(r'^https?://', repo_url):
+            raise web.HTTPBadRequest(text='repo_url must be an http(s) URL')
+
         if not os.path.exists(self.repo_dir) or not os.listdir(self.repo_dir):
             self.log.debug('cloning repo %s' % repo_url)
-            check_call(['git', 'clone', '--depth', '1', repo_url, self.repo_dir], stdout=DEVNULL, stderr=STDOUT)
+            proc = await asyncio.create_subprocess_exec(
+                'git', 'clone', '--depth', '1', '--', repo_url, self.repo_dir,
+                stdout=DEVNULL, stderr=STDOUT)
+            await proc.communicate()
+            if proc.returncode != 0:
+                raise CalledProcessError(proc.returncode, 'git clone')
             self.log.debug('clone complete')
 
     async def populate_data_directory(self, library_path=None):
