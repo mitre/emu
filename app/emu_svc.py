@@ -1,3 +1,4 @@
+import asyncio
 import glob
 import json
 import os
@@ -64,7 +65,7 @@ class EmuService(BaseService):
     async def clone_repo(self, repo_url=None):
         """
         Clone the Adversary Emulation Library repository. You can use a specific url via
-        the `repo_url` parameter (eg. if you want to use a fork).
+        the `repo_url` parameter (e.g. if you want to use a fork).
         """
         if not repo_url:
             repo_url = 'https://github.com/center-for-threat-informed-defense/adversary_emulation_library'
@@ -73,6 +74,29 @@ class EmuService(BaseService):
             self.log.debug('cloning repo %s' % repo_url)
             check_call(['git', 'clone', '--depth', '1', repo_url, self.repo_dir], stdout=DEVNULL, stderr=STDOUT)
             self.log.debug('clone complete')
+
+            # If emu doesn't use rustyzipper yet, patch to avoid pyminizip CVE-2023-45853.
+            remove_pyminizip = [
+                "find",
+                self.repo_dir,
+                "-path",
+                "*/Resources/*tilities/crypt_executables.py",  # Utilities/utilities
+                "-type",
+                "f",
+                "-exec",
+                "sed",
+                "-i",
+                r"s/^\(    \)import pyminizip/\1from rustyzipper.compat import pyminizip/",
+                "{}",
+                "+",
+            ]
+            process = await asyncio.create_subprocess_exec(
+                *remove_pyminizip, stdout=DEVNULL, stderr=STDOUT
+            )
+            exit_code = await process.wait()
+            if exit_code != 0:
+                raise CalledProcessError(returncode=exit_code, cmd=remove_pyminizip)
+            self.log.debug("Finished checking crypt_executables.py files for the pyminizip import.")
 
     async def populate_data_directory(self, library_path=None):
         """

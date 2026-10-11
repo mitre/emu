@@ -27,14 +27,10 @@ Each emulation plan will have an adversary and a set of facts. Please ensure to 
 adversary when starting an operation.
 
 Because some payloads within the Adversary Emulation Library are encrypted, a Python script is used to automate
-the decryption which requires installation of some dependencies. Depending on the host OS, `pyminizip`
+the decryption which requires installation of some dependencies.  `rustyzipper`
 can be installed using the following:
 
-- Ubuntu: `apt-get install zlib1g`
-- MacOS: `brew install zlib`
-- All OS's: `pip3 install -r requirements.txt`
-
-See URL for more information regarding `pyminizip`: https://github.com/smihica/pyminizip
+- `pip3 install -r requirements.txt`
 
 ## Getting Started:
 

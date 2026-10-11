@@ -15,38 +15,20 @@ DATA_DIR = os.path.join(PLUGIN_DIR, 'data')
 class TestRequirementsSecurity:
     """Test that requirements.txt documents known CVE risks."""
 
-    def test_pyminizip_has_cve_warning_comment(self):
-        """pyminizip has known CVEs; requirements.txt should document this.
-
-        pyminizip uses zlib and has had vulnerabilities reported. A comment
-        in requirements.txt should warn maintainers about this risk so it
-        is not overlooked during dependency reviews.
-        """
-        with open(REQUIREMENTS_PATH, 'r', encoding='utf-8') as f:
+    def test_pyminizip_not_listed(self):
+        """Ensure pyminizip is not a direct dependency."""
+        with open(REQUIREMENTS_PATH, encoding="utf-8") as f:
             content = f.read()
 
-        # Verify pyminizip is listed
-        assert 'pyminizip' in content, (
-            "pyminizip not found in requirements.txt"
-        )
+        requirements = [
+            line.split("#", 1)[0].strip()
+            for line in content.splitlines()
+        ]
 
-        # Check for a CVE-related comment near the pyminizip line
-        lines = content.splitlines()
-        found_cve_comment = False
-        for i, line in enumerate(lines):
-            if 'pyminizip' in line.lower():
-                # Check this line and surrounding lines for CVE warning
-                context_start = max(0, i - 2)
-                context_end = min(len(lines), i + 3)
-                context = '\n'.join(lines[context_start:context_end])
-                if 'cve' in context.lower() or 'vulnerab' in context.lower():
-                    found_cve_comment = True
-                    break
-        assert found_cve_comment, (
-            "requirements.txt should have a comment warning about known "
-            "CVEs for pyminizip (e.g., '# WARNING: pyminizip has known "
-            "CVE vulnerabilities')"
-        )
+        assert not any(
+            line.lower().startswith("pyminizip")
+            for line in requirements
+        ), "pyminizip should not be a direct dependency"
 
 
 class TestHookParseable:
